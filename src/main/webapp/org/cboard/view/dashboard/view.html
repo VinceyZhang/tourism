@@ -1,0 +1,219 @@
+<!-- Content Wrapper. Contains page content -->
+
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: -10;
+        background-color: #000;
+    }
+
+    .exportBnt {
+        display: none;
+    }
+
+</style>
+
+<section class="content-header">
+    <h1>
+        <div ng-show="loading"><i class="fa fa-spinner fa-spin"></i> {{"COMMON.LOADING" | translate}}</div>
+        {{board.name}}
+    </h1>
+    <div class="breadcrumb" style="cursor: pointer" ng-click="load(true)"><i class="fa fa-refresh"></i>
+        {{"COMMON.REFRESH" | translate}}
+    </div>
+</section>
+<div id="inner-container" class="content" style="margin-top: 15px;">
+    <div class="row" ng-repeat="row in board.layout.rows track by $index" ng-style="{height:row.height+'px'}">
+        <ng-switch on="row.type">
+            <div ng-switch-when="param">
+                <div class="col-sm-12">
+                    <div class="box box-solid" style="border-left: 1px solid #d2d6de; border-right: 1px solid #d2d6de">
+                        <div class="box-body">
+                            <div class="col-sm-12">
+                                <div style="min-height: 35px;height: auto;padding: 0px">
+                                    <div ng-repeat="param in row.params" class="btn-group"
+                                         style="cursor: move;margin: 3px 3px;">
+                                        <button type="button" class="btn btn-default btn-sm">
+                                            {{param.name}}
+                                        </button>
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                ng-click="editParam(param)">
+                                            <span class="fa fa-edit"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="paramTemplate"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div ng-switch-default>
+                <div ng-repeat="widget in row.widgets track by $index">
+
+                    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">数据导入</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="importData"
+                                          class="form-horizontal"
+                                          method="post" enctype="multipart/form-data">
+                                        <input type="file" value="请选择文件" name="file"/> <br/><br/>
+                                        <input ng-model="widget.widget.data.datasetId" name="datasetId" hidden/>
+                                        <button class="btn btn-info" ng-click="importData()">导入</button>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="downloadModal" tabindex="-2" role="dialog"
+                         aria-labelledby="downloadModalLabel" data-keyboard="true" data-backdrop="static">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="downloadModalLabel">数据导出结果</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div style="height:500px;overflow:scroll;">
+                                        <button class="btn btn-danger" ng-click="deleteFiles(selectFiles)">批量删除</button>
+                                        <a class="btn btn-danger" href="javascript:void(0);"  ng-click="downloadFiles(selectFiles)">批量下载</a>
+                                        <table class="table table-hover">
+                                            <thead>
+                                            <tr>
+                                                <td><input type="checkbox" ng-model="allFile"
+                                                           ng-click="selectAllFile(allFile)">全选
+                                                </td>
+                                                <td>文件名</td>
+                                                <td>操作</td>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr ng-repeat="file in files">
+                                                <td><input type="checkbox" ng-checked="allFile" value="{{file.name}}"
+                                                           ng-click="selectSingleFile($event,file)">
+                                                </td>
+                                                <td>{{file.name}}</td>
+                                                <td><a class="btn btn-info" ng-href="{{file.addr}}">下载</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    <button class="btn btn-danger"
+                                                            ng-click="clickDelete(file.name)">删除
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="row" ng-show="isDataManager">
+                        <div class="col-md-12">
+                            <form class="form-horizontal">
+                                <div class="col-md-6">
+                                    <div ng-repeat="p in params track by $index">
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">{{p}}</label>
+                                            <div class="col-sm-10">
+                                                <input ng-model="colParams[$index]" class="form-control" placeholder="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="col-sm-offset-2 col-sm-10">
+                                            <button ng-click="clickSearch()" class="btn btn-default">查询</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="col-md-6">
+                                <ul class="pagination">
+                                    <li>
+                                        <a href="javascript:void(0);" ng-click="goPage(1)"
+                                           ng-class="{true:active,false:''}[p==curPage]">首页</a></li>
+                                    <li><a href="javascript:void(0);" ng-click="goPage(p)"
+                                           ng-class="{true:active,false:''}[p==curPage]"
+                                           ng-repeat="p in pages track by $index">第{{p}}页</a></li>
+                                    <li><a href="javascript:void(0);" ng-click="goPage(totalPage)"
+                                           ng-class="{true:active,false:''}[p==curPage]"
+                                           ng-model="totalPage">尾页</a></li>
+
+                                </ul>
+
+                            </div>
+                            <div class="col-md-1 pull-right">
+                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                        data-target="#myModal">
+                                    数据导入
+                                </button>
+                                <button type="button" class="btn btn-primary" ng-click="exportData(widget.widget.data.datasetId,
+                                widget.widget.data.config.keys,widget.widget.name)">
+                                    数据导出
+                                </button>
+
+                                <button type="button" class="btn btn-primary" ng-click="showExport()">
+                                    导出列表
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <dashboard-widget ng-if="widget.show"></dashboard-widget>
+                    <div ng-if="!widget.show && widget.hasRole != false" class="col-md-{{widget.width}}"
+                         style="height: 50px;">
+                        <i class="fa fa-spinner fa-spin"></i> {{"COMMON.LOADING" | translate}}
+                    </div>
+
+                    <div ng-if="widget.hasRole == false" class="col-md-{{widget.width}}">
+                        <div class="box box-solid">
+                            <div class="box-header">
+                                <i class="fa fa-bar-chart-o"></i>
+                                <h3 class="box-title">{{widget.name}}</h3>
+                                <div class="box-tools pull-right">
+                                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i
+                                            class="fa fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="box-body" ng-style="{height:widget.height?widget:300+'px'}">
+                                {{'ADMIN.CONTACT_ADMIN' | translate}}：<br>
+
+                                <ul>
+                                    <li ng-repeat="ri in widget.roleInfo"> {{ri.type | translate}}：{{ri.name}}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-switch>
+    </div>
+
+</div>
